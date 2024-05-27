@@ -23,7 +23,7 @@ class Number:
 Token = Operator | Number
 
 
-def read_number(line: str, index: int) -> tuple[list[Token], int]:
+def read_number(line: str, index: int) -> tuple[Token, int]:
     number = 0
     while index < len(line) and line[index].isdigit():
         number: float = number * 10 + int(line[index])
@@ -35,37 +35,37 @@ def read_number(line: str, index: int) -> tuple[list[Token], int]:
             number += int(line[index]) * decimal
             decimal /= 10
             index += 1
-    token: list[Token] = [Number(number)]
+    token: Token = Number(number)
     return token, index
 
 
-def read_plus(line: str, index: int) -> tuple[list[Token], int]:
-    token: list[Token] = [Operator.PLUS]
+def read_plus(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.PLUS
     return token, index + 1
 
 
-def read_minus(line: str, index: int) -> tuple[list[Token], int]:
-    token: list[Token] = [Operator.MINUS]
+def read_minus(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.MINUS
     return token, index + 1
 
 
-def read_times(line: str, index: int) -> tuple[list[Token], int]:
-    token: list[Token] = [Operator.TIMES]
+def read_times(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.TIMES
     return token, index + 1
 
 
-def read_over(line: str, index: int) -> tuple[list[Token], int]:
-    token: list[Token] = [Operator.OVER]
+def read_over(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.OVER
     return token, index + 1
 
 
-def read_left(line: str, index: int) -> tuple[list[Token], int]:
-    token: list[Token] = [Operator.LEFT]
+def read_left(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.LEFT
     return token, index + 1
 
 
-def read_right(line: str, index: int) -> tuple[list[Token], int]:
-    token: list[Token] = [Operator.RIGHT]
+def read_right(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.RIGHT
     return token, index + 1
 
 
@@ -91,7 +91,7 @@ def tokenize(line: str) -> list[Token]:
         else:
             print("Invalid character found: " + line[index])
             exit(1)
-        tokens += token
+        tokens.append(token)
     return tokens
 
 
