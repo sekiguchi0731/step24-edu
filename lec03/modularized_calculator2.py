@@ -12,6 +12,9 @@ class Operator(Enum):
     OVER = auto()
     LEFT = auto()
     RIGHT = auto()
+    ABS = auto()
+    INT = auto()
+    ROUND = auto()
 
 
 ## 数値のためのクラス
@@ -68,6 +71,20 @@ def read_right(line: str, index: int) -> tuple[Token, int]:
     token: Token = Operator.RIGHT
     return token, index + 1
 
+def read_abs(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.ABS
+    return token, index + 3
+
+
+def read_int(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.INT
+    return token, index + 3
+
+
+def read_round(line: str, index: int) -> tuple[Token, int]:
+    token: Token = Operator.ROUND
+    return token, index + 5
+
 
 # タプルのアンパック時に直接型注釈を追加することはできない
 def tokenize(line: str) -> list[Token]:
@@ -88,6 +105,12 @@ def tokenize(line: str) -> list[Token]:
             (token, index) = read_left(line, index)
         elif line[index] == ")":
             (token, index) = read_right(line, index)
+        elif line[index] == "a":
+            (token, index) = read_abs(line, index)
+        elif line[index] == "i":
+            (token, index) = read_int(line, index)
+        elif line[index] == "r":
+            (token, index) = read_round(line, index)
         else:
             print("Invalid character found: " + line[index])
             exit(1)
@@ -139,8 +162,21 @@ def evaluate_parentheses(tokens: list[Token], lindex: int, rindex: int) -> list[
         # 直前の(...)を(tokens)にして、evaluateに渡して計算し、
         # その答えをNumberのインスタンスにしてリストの一要素として足して返す
         print("left:" + str(lindex) + " right:" + str(rindex))
+        print(tokens[lindex - 1])
+        print(tokens[lindex + 1 : rindex])
         answer: float = evaluate(tokens[lindex + 1 : rindex])
         print("right" + str(answer))
+        if tokens[lindex - 1] == Operator.ABS:
+            answer = abs(answer)
+            lindex -= 1
+        elif tokens[lindex - 1] == Operator.INT:
+            answer = int(answer)
+            lindex -= 1
+        elif tokens[lindex - 1] == Operator.ROUND:
+            answer = round(answer)
+            lindex -= 1
+        else:
+            pass
         calculated_token: list[Token] = (
             tokens[:lindex] + [Number(answer)] + tokens[rindex + 1 :]
         )
@@ -159,10 +195,15 @@ def evaluate_parentheses(tokens: list[Token], lindex: int, rindex: int) -> list[
 def evaluate(tokens: list[Token]) -> float:
     answer: float = 0
     # Insert a dummy '+' token
-    tokens = [
-        Number(0),
-        Operator.PLUS,
-    ] + tokens
+    if tokens[0] == Operator.MINUS:
+        tokens = [Number(0)] + tokens
+    else:
+        tokens = [
+            Number(0),
+            Operator.PLUS,
+        ] + tokens
+    print(tokens)
+    print("here")
     index: int = len(tokens) - 1
     # 掛け算と割り算
     while index > 1:
@@ -187,6 +228,7 @@ def evaluate(tokens: list[Token]) -> float:
 
 def test(line: str) -> None:
     tokens: list[Token] = tokenize(line)
+    print(tokens)
     tokens = evaluate_parentheses(tokens, 0, 0)
     actual_answer: float = evaluate(tokens)
     expected_answer: float = eval(line)
@@ -207,6 +249,7 @@ def run_test() -> None:
     test("1.0+2.1*3")
     test("1.0+((2-1)*3-2)")
     test("3/2+1.5-(2+3*(5-1))")
+    test("12+abs(int(round(-1.55)+abs(int(-2.3+4))))")
     print("==== Test finished! ====\n")
 
 
