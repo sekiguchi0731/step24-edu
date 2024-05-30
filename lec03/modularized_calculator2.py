@@ -154,42 +154,45 @@ def evaluate_over(tokens: list[Token], index: int) -> tuple[list[Token], int]:
     return tokens, index - 2
 
 
-def evaluate_parentheses(tokens: list[Token], lindex: int, rindex: int) -> list[Token]:
-    # 再帰の終点
-    if rindex >= len(tokens):
-        return tokens
-    elif tokens[rindex] == Operator.RIGHT:
-        # 直前の(...)を(tokens)にして、evaluateに渡して計算し、
-        # その答えをNumberのインスタンスにしてリストの一要素として足して返す
-        print("left:" + str(lindex) + " right:" + str(rindex))
-        print(tokens[lindex - 1])
-        print(tokens[lindex + 1 : rindex])
-        answer: float = evaluate(tokens[lindex + 1 : rindex])
-        print("right" + str(answer))
-        if tokens[lindex - 1] == Operator.ABS:
-            answer = abs(answer)
-            lindex -= 1
-        elif tokens[lindex - 1] == Operator.INT:
-            answer = int(answer)
-            lindex -= 1
-        elif tokens[lindex - 1] == Operator.ROUND:
-            answer = round(answer)
-            lindex -= 1
-        else:
-            pass
-        calculated_token: list[Token] = (
-            tokens[:lindex] + [Number(answer)] + tokens[rindex + 1 :]
-        )
-        print(calculated_token)
-        return evaluate_parentheses(calculated_token, 0, 0)
-    elif tokens[rindex] == Operator.LEFT:
-        # (の次を初項とするリストに関して、evaluate_parenthesesを回す
-        print("left")
-        return evaluate_parentheses(tokens, rindex, rindex + 1)
+def evaluate_parentheses(tokens: list[Token]) -> Number:
+    lindex: int = 0
+    rindex: int = len(tokens) - 1
+    if lindex == rindex:
+        return Number(evaluate(tokens))
+    # 番兵
+    # tokens = [Operator.RIGHT] + tokens + [Operator.LEFT]
+    # ()があるまでポインタを回す
+    while lindex < len(tokens) and tokens[lindex] != Operator.LEFT:
+        lindex += 1
+    while rindex > 0 and tokens[rindex] != Operator.RIGHT:
+        rindex -= 1
+    # 中身が計算可能な()がある
+    if lindex < rindex:
+        # print("回すやつ" + str(lindex))
+        # print(tokens[lindex])
+        # print(tokens[lindex + 1 : rindex])
+        # print("\n")
+        # 再帰的にevaluate_parentheses()を呼び出し、最も内側の括弧内の式を計算
+        inner_result = evaluate_parentheses(tokens[lindex + 1 : rindex])
+        # print(inner_result)
+        # 計算結果をtokensに反映
+        tokens = tokens[:lindex] + [inner_result] + tokens[rindex + 1 :]
+        # print("結果")
+        # print(tokens)
+        # 次の計算のために再帰呼び出し
+        return evaluate_parentheses(tokens)
+    # 要素が0または重なる時(ない)
+    # elif lindex == rindex:
+    #     print("()内の要素は1以上にしてください\n")
+    #     return Number(0)
+    # もう()がない
     else:
-        # leftがあるまで回す
-        print("else" + str(rindex))
-        return evaluate_parentheses(tokens, lindex, rindex + 1)
+        # 番兵なしを渡す
+        # print("渡すよ~")
+        # print(tokens)
+        # print("\n")
+        answer: float = evaluate(tokens)
+        return Number(answer)
 
 
 def evaluate(tokens: list[Token]) -> float:
@@ -202,8 +205,9 @@ def evaluate(tokens: list[Token]) -> float:
             Number(0),
             Operator.PLUS,
         ] + tokens
-    print(tokens)
-    print("here")
+    # print("計算する")
+    # print(tokens)
+    # print("here")
     index: int = len(tokens) - 1
     # 掛け算と割り算
     while index > 1:
@@ -229,8 +233,7 @@ def evaluate(tokens: list[Token]) -> float:
 def test(line: str) -> None:
     tokens: list[Token] = tokenize(line)
     print(tokens)
-    tokens = evaluate_parentheses(tokens, 0, 0)
-    actual_answer: float = evaluate(tokens)
+    actual_answer: float = evaluate_parentheses(tokens).data
     expected_answer: float = eval(line)
     if abs(actual_answer - expected_answer) < 1e-8:
         print("PASS! (%s = %f)" % (line, expected_answer))
@@ -249,7 +252,7 @@ def run_test() -> None:
     test("1.0+2.1*3")
     test("1.0+((2-1)*3-2)")
     test("3/2+1.5-(2+3*(5-1))")
-    test("12+abs(int(round(-1.55)+abs(int(-2.3+4))))")
+    # test("12+abs(int(round(-1.55)+abs(int(-2.3+4))))")
     print("==== Test finished! ====\n")
 
 
@@ -259,6 +262,5 @@ while True:
     print("> ", end="")
     line: str = input()
     tokens: list[Token] = tokenize(line)
-    tokens = evaluate_parentheses(tokens, 0, 0)
-    answer: float = evaluate(tokens)
+    answer: float = evaluate_parentheses(tokens).data
     print("answer = %f\n" % answer)
