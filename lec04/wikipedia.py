@@ -1,4 +1,5 @@
 import sys
+import time
 from collections import deque
 
 
@@ -109,30 +110,50 @@ class Wikipedia:
 
     # Calculate the page ranks and print the most popular pages.
     def find_most_popular_pages(self) -> None:
+        t1 = time.time()
         # 初期化
         for id in self.titles:
             self.page_ranks[id] = 1
         id_total: int = len(self.page_ranks)
+        t0 = time.time()
+        print(t0 - t1)
         # 分配
-        for _ in range(10):
+        while True:
+            t2 = time.time()
+            print(t2 - t1)
             print("in")
             ## ページランク一時保存用
             temp_page_ranks: dict[int, float] = {}
+            total_15 = 0
             for target_id, target_page_rank in self.page_ranks.items():
+                total_15 += 0.15 * target_page_rank / id_total
+                linked_id_count = len(self.links[target_id])
+                if linked_id_count == 0:
+                    total_15 += 0.85 * target_page_rank / id_total
+
+            for target_id, target_page_rank in self.page_ranks.items():
+                t3 = time.time()
+                print(t3 - t1)
                 print(str(target_id))
                 linked_id_count: int = len(self.links[target_id])
-                unlinked_id_count: int = id_total - linked_id_count
-                for id in self.page_ranks:
-                    if id in self.links[target_id]:
-                        temp_page_ranks[id] = (
-                            temp_page_ranks.get(id, 0)
-                            + 0.85 * target_page_rank / linked_id_count
-                        )
-                    else:
-                        temp_page_ranks[id] = (
-                            temp_page_ranks.get(id, 0)
-                            + 0.15 * target_page_rank / unlinked_id_count
-                        )
+                for id in self.links[target_id]:
+                    temp_page_ranks[id] = (
+                        temp_page_ranks.get(id, 0)
+                        + 0.85 * target_page_rank / linked_id_count
+                    )
+                temp_page_ranks[target_id] = (
+                    temp_page_ranks.get(target_id, 0) + total_15
+                )
+
+            # while文を抜けるタイミング
+            id_difference: float = 0
+            for id in self.page_ranks:
+                id_difference += (
+                    abs(self.page_ranks[id] - temp_page_ranks[id]) / id_total
+                )
+            if id_difference < 1.0e-15:
+                break
+
             self.page_ranks = temp_page_ranks
         print(self.page_ranks.values())
         print(str(sum(self.page_ranks.values())))
@@ -159,8 +180,8 @@ if __name__ == "__main__":
         exit(1)
 
     wikipedia = Wikipedia(sys.argv[1], sys.argv[2])
-    wikipedia.find_longest_titles()
-    wikipedia.find_most_linked_pages()
+    # wikipedia.find_longest_titles()
+    # wikipedia.find_most_linked_pages()
     # wikipedia.find_shortest_path("渋谷", "パレートの法則")
     # wikipedia.find_shortest_path("B", "E")
     wikipedia.find_most_popular_pages()
