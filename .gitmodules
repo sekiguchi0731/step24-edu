@@ -1,0 +1,3 @@
+[submodule "lec07/malloc_challenge"]
+	path = lec07/malloc_challenge
+	url = https://github.com/hikalium/malloc_challenge.git
